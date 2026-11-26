@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karate Tournament Admin Portal — Cloud Registration & 5 kg Brackets</title>
+  <!-- Tailwind CSS for responsive layout and utilities -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Font: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* Base typography and custom scrollbar styling */
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #0f172a;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    /* Interactive summary card states */
+    .summary-item {
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .summary-item:hover {
+      border-color: #ef4444;
+      background-color: #273549;
+      transform: translateY(-2px);
+    }
+    .summary-item.active-card {
+      border: 2px solid #ef4444;
+      background-color: rgba(239, 68, 68, 0.12);
+      box-shadow: 0 8px 20px -6px rgba(239, 68, 68, 0.35);
+    }
+    .summary-item.active-card .summary-count {
+      background-color: #ef4444;
+      border-color: #ef4444;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body class="bg-[#0f172a] text-slate-100 min-h-screen antialiased selection:bg-[#ef4444] selection:text-white">
+
+  <!-- ===================================================================== -->
+  <!-- 1. AUTHENTICATION GATE (SIGN IN / CREATE ACCOUNT / GUEST MODE)        -->
+  <!-- ===================================================================== -->
+  <div id="authScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-[#1e293b] border border-slate-700/80 rounded-2xl shadow-2xl p-6 sm:p-8">
+      <!-- Brand Header -->
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#ef4444]/15 border border-[#ef4444]/30 text-3xl mb-3">
+          🥋
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight text-white">Karate Tournament</h1>
+        <p class="text-sm text-slate-400 mt-1">Official Cloud Registration & Bracket System</p>
+      </div>
+
+      <!-- Auth Mode Toggle Tabs -->
+      <div class="grid grid-cols-2 gap-1 p-1 bg-[#0f172a] rounded-xl border border-slate-800 mb-6">
+        <button type="button" id="tabSignIn" class="py-2 text-sm font-semibold rounded-lg bg-[#ef4444] text-white transition cursor-pointer">
+          Sign In
+        </button>
+        <button type="button" id="tabSignUp" class="py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition cursor-pointer">
+          Create Account
+        </button>
+      </div>
+
+      <!-- Email & Password Form -->
+      <form id="authForm" class="space-y-4">
+        <div>
+          <label for="authEmail" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+            Email Address
+          </label>
+          <input
+            type="email"
+            id="authEmail"
+            required
+            placeholder="admin@tournament.com"
+            class="w-full px-3.5 py-2.5 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#ef4444] transition"
+          />
+        </div>
+
+        <div>
+          <label for="authPassword" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+            Password
+          </label>
+          <input
+            type="password"
+            id="authPassword"
+            required
+            minlength="6"
+            placeholder="•••••••• (min 6 characters)"
+            class="w-full px-3.5 py-2.5 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#ef4444] transition"
+          />
+        </div>
+
+        <!-- Inline Error/Status Feedback -->
+        <div id="authMessage" class="hidden text-xs font-medium rounded-xl p-3"></div>
+
+        <button
+          type="submit"
+          id="authSubmitBtn"
+          class="w-full py-3 px-4 bg-[#ef4444] hover:bg-red-500 active:bg-red-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-600/20 transition cursor-pointer"
+        >
+          Sign In to Dashboard
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="relative my-6">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-slate-700"></div>
+        </div>
+        <div class="relative flex justify-center text-xs uppercase">
+          <span class="bg-[#1e293b] px-3 text-slate-400 font-medium">Or continue quickly</span>
+        </div>
+      </div>
+
+      <!-- Guest / Anonymous Access Button -->
+      <button
+        type="button"
+        id="guestLoginBtn"
+        class="w-full py-2.5 px-4 bg-[#0f172a] hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold text-sm rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+      >
+        <span>⚡</span> Enter as Tournament Guest
+      </button>
+
+      <p class="text-center text-xs text-slate-400 mt-5">
+        Only Admin accounts can delete records • Project <span class="text-slate-300 font-mono">tour-39358</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 2. MAIN TOURNAMENT DASHBOARD (HIDDEN UNTIL SIGNED IN)                 -->
+  <!-- ===================================================================== -->
+  <div id="dashboardScreen" class="hidden max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <!-- Top Header Bar -->
+    <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 mb-6 border-b border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-[#ef4444]/15 border border-[#ef4444]/30 flex items-center justify-center text-2xl">
+          🥋
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Karate Tournament Management</h1>
+          <p class="text-xs text-slate-400">Real-time Cloud Roster & 5 kg Weight Bracket Classifier</p>
+        </div>
+      </div>
+
+      <!-- Status Pills & Role Controls -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Role Mode Badge (Admin Mode vs Standard / Guest User) -->
+        <div id="roleBadge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs font-bold text-slate-300">
+          <span id="roleIcon">👤</span>
+          <span id="roleText">Standard / Guest User</span>
+        </div>
+
+        <!-- Cloud Sync Status -->
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1e293b] border border-slate-700/80 text-xs font-medium text-slate-300">
+          <span id="statusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span id="statusText">Connecting...</span>
+        </div>
+
+        <!-- Registered Player Counter -->
+        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1e293b] border border-slate-700/80 text-xs font-medium text-slate-300">
+          <span>Players:</span>
+          <strong id="playerCount" class="text-white font-bold">0</strong>
+        </div>
+
+        <!-- Signed-in User Email Badge -->
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1e293b] border border-slate-700/80 text-xs text-slate-300 max-w-[210px] truncate">
+          <span class="text-[#22c55e]">●</span>
+          <span id="userEmailDisplay" class="truncate font-medium">Signed In</span>
+        </div>
+
+        <!-- Sign Out Button -->
+        <button
+          type="button"
+          id="signOutBtn"
+          class="px-3.5 py-1.5 rounded-full bg-[#1e293b] hover:bg-[#ef4444]/20 hover:text-red-400 hover:border-[#ef4444]/40 border border-slate-700 text-xs font-semibold text-slate-200 transition cursor-pointer"
+        >
+          Sign Out
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      <button
+        type="button"
+        id="navRegisterBtn"
+        class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#ef4444] text-white shadow-md shadow-red-600/20 transition cursor-pointer"
+      >
+        1. Player Registration & Roster
+      </button>
+      <button
+        type="button"
+        id="navClassifyBtn"
+        class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#1e293b] text-slate-400 hover:text-white border border-slate-800 transition cursor-pointer"
+      >
+        2. Weight & Belt Classification (5 kg)
+      </button>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- VIEW A: PLAYER REGISTRATION FORM & LIVE ROSTER TABLE                -->
+    <!-- =================================================================== -->
+    <div id="registerTab" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Left Column: Registration Form (No Phone Number) -->
+      <section class="lg:col-span-4 bg-[#1e293b] border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xl">
+        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <span>📝</span> Register New Player
+        </h2>
+
+        <form id="playerForm" class="space-y-4">
+          <div>
+            <label for="name" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              Player Full Name *
+            </label>
+            <input
+              type="text"
+              id="name"
+              required
+              placeholder="e.g., Kenji Sato"
+              class="w-full px-3.5 py-2.5 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#ef4444] transition"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="age" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                Age (Years) *
+              </label>
+              <input
+                type="number"
+                id="age"
+                min="4"
+                max="99"
+                required
+                placeholder="e.g., 16"
+                class="w-full px-3.5 py-2.5 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#ef4444] transition"
+              />
+            </div>
+
+            <div>
+              <label for="weight" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                Weight (kg) *
+              </label>
+              <input
+                type="number"
+                id="weight"
+                min="15"
+                max="200"
+                step="0.1"
+                required
+                placeholder="e.g., 52.5"
+                class="w-full px-3.5 py-2.5 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#ef4444] transition"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="belt" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              Karate Belt Rank *
+            </label>
+            <select
+              id="belt"
+              required
+              class="w-full px-3.5 py-2.5 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-[#ef4444] transition"
+            >
+              <option value="" disabled selected>Select Belt Rank</option>
+              <option value="White">White Belt</option>
+              <option value="Yellow">Yellow Belt</option>
+              <option value="Orange">Orange Belt</option>
+              <option value="Green">Green Belt</option>
+              <option value="Blue">Blue Belt</option>
+              <option value="Purple">Purple Belt</option>
+              <option value="Brown">Brown Belt</option>
+              <option value="Black">Black Belt</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            id="submitBtn"
+            class="w-full py-3 px-4 bg-[#ef4444] hover:bg-red-500 active:bg-red-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-red-600/20 transition cursor-pointer mt-2"
+          >
+            Save Player to Database
+          </button>
+
+          <!-- Toast notification area -->
+          <div id="toastMsg" class="text-xs text-center font-medium min-h-[20px] pt-1"></div>
+        </form>
+      </section>
+
+      <!-- Right Column: Live Tournament Roster -->
+      <section class="lg:col-span-8 bg-[#1e293b] border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <span>📋</span> Live Tournament Roster
+            </h2>
+            <p id="permissionNotice" class="text-xs text-slate-400 mt-0.5">
+              View & register players. Record deletion is restricted to Admin accounts.
+            </p>
+          </div>
+          <button
+            type="button"
+            id="exportCsvBtn"
+            class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#0f172a] hover:bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 transition cursor-pointer"
+          >
+            <span>📥</span> Export CSV
+          </button>
+        </div>
+
+        <!-- Search and Filter Controls -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search player name..."
+            class="sm:col-span-2 px-3.5 py-2.5 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#ef4444] transition"
+          />
+          <select
+            id="beltFilter"
+            class="px-3.5 py-2.5 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-[#ef4444] transition"
+          >
+            <option value="All">All Belt Ranks</option>
+            <option value="White">White</option>
+            <option value="Yellow">Yellow</option>
+            <option value="Orange">Orange</option>
+            <option value="Green">Green</option>
+            <option value="Blue">Blue</option>
+            <option value="Purple">Purple</option>
+            <option value="Brown">Brown</option>
+            <option value="Black">Black</option>
+          </select>
+        </div>
+
+        <!-- Roster Data Table (No Phone Column) -->
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr id="rosterHeaderRow" class="bg-[#0f172a]/80 border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
+                <th class="py-3 px-4 font-semibold">Player Name</th>
+                <th class="py-3 px-3 font-semibold">Age</th>
+                <th class="py-3 px-3 font-semibold">Belt</th>
+                <th class="py-3 px-3 font-semibold">Weight</th>
+                <!-- Action column header is dynamically shown only when isAdmin is true -->
+                <th id="actionColumnHeader" class="hidden py-3 px-4 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="rosterBody" class="divide-y divide-slate-800/70"></tbody>
+          </table>
+          <div id="emptyState" class="text-center py-12 px-4 text-slate-400 text-sm">
+            No players registered yet. Add a player using the form on the left.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- VIEW B: AUTOMATIC 5 KG WEIGHT & BELT CLASSIFICATION                 -->
+    <!-- =================================================================== -->
+    <div id="classifyTab" class="hidden space-y-6">
+      <section class="bg-[#1e293b] border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xl">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <span>⚖️</span> Automatic 5 kg Weight & Belt Classification
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Click any weight category card below to filter players in that exact 5 kg bracket.
+            </p>
+          </div>
+
+          <!-- Division & Bracket Filters -->
+          <div class="flex flex-wrap gap-3">
+            <select
+              id="classificationDivisionFilter"
+              class="px-3.5 py-2 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-[#ef4444] transition"
+            >
+              <option value="All">All Divisions (Color & Black)</option>
+              <option value="Color Belts">Color Belts (White - Brown)</option>
+              <option value="Black Belt">Black Belt Division</option>
+            </select>
+
+            <select
+              id="classificationBracketFilter"
+              class="px-3.5 py-2 bg-[#0f172a] border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-[#ef4444] transition"
+            >
+              <option value="All">All 5 kg Brackets</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Active Card Filter Reset Banner -->
+        <div id="activeCardBanner" class="hidden mb-4 px-4 py-2.5 rounded-xl bg-[#0f172a] border border-[#ef4444]/60 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2 text-xs">
+            <span class="text-[#ef4444] font-bold uppercase tracking-wider">Selected Category:</span>
+            <span id="activeCardLabel" class="font-bold text-white"></span>
+          </div>
+          <button
+            type="button"
+            id="clearCardFilterBtn"
+            class="px-3 py-1 rounded-lg bg-[#1e293b] hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition cursor-pointer"
+          >
+            Show All Categories
+          </button>
+        </div>
+
+        <!-- Interactive Clickable Summary Cards per Bracket -->
+        <div id="bracketSummaryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6"></div>
+
+        <!-- Classified Players Table (No Phone Column) -->
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-[#0f172a]/80 border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
+                <th class="py-3 px-4 font-semibold">Belt Division</th>
+                <th class="py-3 px-4 font-semibold">5kg Weight Bracket</th>
+                <th class="py-3 px-4 font-semibold">Player Name</th>
+                <th class="py-3 px-3 font-semibold">Age</th>
+                <th class="py-3 px-3 font-semibold">Weight</th>
+                <th class="py-3 px-3 font-semibold">Belt Rank</th>
+              </tr>
+            </thead>
+            <tbody id="classificationBody" class="divide-y divide-slate-800/70"></tbody>
+          </table>
+          <div id="classificationEmptyState" class="text-center py-12 px-4 text-slate-400 text-sm">
+            No registered players match the selected division or weight bracket.
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- CUSTOM CONFIRMATION MODAL (ADMIN DELETE ONLY)                         -->
+  <!-- ===================================================================== -->
+  <div id="confirmModal" class="hidden fixed inset-0 z-50 bg-[#0f172a]/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#1e293b] border border-slate-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider mb-1">
+        <span>🛡️</span> Admin Action
+      </div>
+      <h3 class="text-base font-bold text-white mb-2">Remove Player Record?</h3>
+      <p id="confirmModalText" class="text-sm text-slate-400 mb-5">
+        Are you sure you want to delete this player from the cloud database?
+      </p>
+      <div class="flex justify-end gap-2.5">
+        <button
+          type="button"
+          id="confirmCancelBtn"
+          class="px-4 py-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold transition cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          id="confirmDeleteBtn"
+          class="px-4 py-2 rounded-xl bg-[#ef4444] hover:bg-red-500 text-white text-xs font-semibold transition cursor-pointer"
+        >
+          Delete Player
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- FIREBASE AUTHENTICATION, ROLE CONTROL & FIRESTORE REAL-TIME LOGIC     -->
+  <!-- ===================================================================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signInAnonymously,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      deleteDoc,
+      doc,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    // =====================================================================
+    // ADMIN ROLE CONFIGURATION
+    // =====================================================================
+    const ADMIN_EMAIL = "admin@tournament.com";
+
+    // Firebase Project Configuration (tour-39358)
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9Kl2lemxvAi5IfpKmNM469mC_ujT56Ao",
+      authDomain: "tour-39358.firebaseapp.com",
+      projectId: "tour-39358",
+      storageBucket: "tour-39358.firebasestorage.app",
+      messagingSenderId: "398643025649",
+      appId: "1:398643025649:web:25b8ebf8f4183851503b50",
+      measurementId: "G-TET0ZL1NZF"
+    };
+
+    // Initialize Firebase App, Auth, and Firestore
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Belt badge dot colors
+    const BELT_COLORS = {
+      White: "#f8fafc",
+      Yellow: "#facc15",
+      Orange: "#fb923c",
+      Green: "#22c55e",
+      Blue: "#3b82f6",
+      Purple: "#a855f7",
+      Brown: "#92400e",
+      Black: "#090d16"
+    };
+
+    // Application State
+    let isSignUpMode = false;
+    let isAdmin = false;
+    let players = [];
+    let unsubscribeSnapshot = null;
+    let pendingDeleteId = null;
+    let selectedCategoryKey = null; // Format: "Division|Bracket"
+
+    // DOM Elements — Auth
+    const authScreen = document.getElementById("authScreen");
+    const dashboardScreen = document.getElementById("dashboardScreen");
+    const tabSignIn = document.getElementById("tabSignIn");
+    const tabSignUp = document.getElementById("tabSignUp");
+    const authForm = document.getElementById("authForm");
+    const authEmail = document.getElementById("authEmail");
+    const authPassword = document.getElementById("authPassword");
+    const authSubmitBtn = document.getElementById("authSubmitBtn");
+    const authMessage = document.getElementById("authMessage");
+    const guestLoginBtn = document.getElementById("guestLoginBtn");
+    const signOutBtn = document.getElementById("signOutBtn");
+    const userEmailDisplay = document.getElementById("userEmailDisplay");
+
+    // DOM Elements — Role & Dashboard
+    const roleBadge = document.getElementById("roleBadge");
+    const roleIcon = document.getElementById("roleIcon");
+    const roleText = document.getElementById("roleText");
+    const permissionNotice = document.getElementById("permissionNotice");
+    const actionColumnHeader = document.getElementById("actionColumnHeader");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const playerCount = document.getElementById("playerCount");
+    const toastMsg = document.getElementById("toastMsg");
+    const submitBtn = document.getElementById("submitBtn");
+    const navRegisterBtn = document.getElementById("navRegisterBtn");
+    const navClassifyBtn = document.getElementById("navClassifyBtn");
+    const registerTab = document.getElementById("registerTab");
+    const classifyTab = document.getElementById("classifyTab");
+
+    // Helper: Update Role Badge & Table Delete Column Visibility
+    function updateRoleUI() {
+      if (isAdmin) {
+        roleBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-xs font-bold text-amber-300";
+        roleIcon.textContent = "🛡️";
+        roleText.textContent = "Admin Mode";
+        actionColumnHeader.classList.remove("hidden");
+        permissionNotice.textContent = "Admin privileges active: You can register, export, and delete player records.";
+        permissionNotice.className = "text-xs text-amber-400/90 mt-0.5";
+      } else {
+        roleBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300";
+        roleIcon.textContent = "👤";
+        roleText.textContent = "Standard / Guest User";
+        actionColumnHeader.classList.add("hidden");
+        permissionNotice.textContent = "Standard access: You can add and view players. Only Admin can delete records.";
+        permissionNotice.className = "text-xs text-slate-400 mt-0.5";
+      }
+    }
+
+    // Helper: Show feedback on Sign-In screen
+    function showAuthFeedback(msg, isError = true) {
+      authMessage.textContent = msg;
+      authMessage.className = isError
+        ? "text-xs font-medium rounded-xl p-3 bg-red-500/10 border border-red-500/30 text-red-400"
+        : "text-xs font-medium rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
+      authMessage.classList.remove("hidden");
+    }
+
+    // Helper: Show temporary toast in registration form
+    function showToast(msg, isError = false) {
+      toastMsg.textContent = msg;
+      toastMsg.className = isError
+        ? "text-xs text-center font-medium min-h-[20px] pt-1 text-red-400"
+        : "text-xs text-center font-medium min-h-[20px] pt-1 text-[#22c55e]";
+      setTimeout(() => {
+        toastMsg.textContent = "";
+      }, 3500);
+    }
+
+    // Helper: Prevent XSS when rendering user strings
+    function escapeHtml(str) {
+      return String(str ?? "").replace(/[&<>"']/g, (m) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[m]));
+    }
+
+    // Helper: Calculate strict 5 kg weight bracket (e.g., 40 - 45 kg (-45 kg), 45 - 50 kg (-50 kg))
+    function get5KgBracket(weight) {
+      const w = Number(weight);
+      if (isNaN(w) || w <= 0) return "Unassigned";
+      const bracket = Math.ceil(w / 5) * 5;
+      const lower = bracket - 5;
+      return `${lower} - ${bracket} kg (-${bracket} kg)`;
+    }
+
+    function get5KgSortValue(weight) {
+      const w = Number(weight);
+      return isNaN(w) ? 999 : Math.ceil(w / 5) * 5;
+    }
+
+    // =====================================================================
+    // AUTHENTICATION UI & HANDLERS
+    // =====================================================================
+    tabSignIn.addEventListener("click", () => {
+      isSignUpMode = false;
+      tabSignIn.className = "py-2 text-sm font-semibold rounded-lg bg-[#ef4444] text-white transition cursor-pointer";
+      tabSignUp.className = "py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition cursor-pointer";
+      authSubmitBtn.textContent = "Sign In to Dashboard";
+      authMessage.classList.add("hidden");
+    });
+
+    tabSignUp.addEventListener("click", () => {
+      isSignUpMode = true;
+      tabSignUp.className = "py-2 text-sm font-semibold rounded-lg bg-[#ef4444] text-white transition cursor-pointer";
+      tabSignIn.className = "py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition cursor-pointer";
+      authSubmitBtn.textContent = "Create Account & Enter";
+      authMessage.classList.add("hidden");
+    });
+
+    authForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
+      authMessage.classList.add("hidden");
+      authSubmitBtn.disabled = true;
+      authSubmitBtn.textContent = isSignUpMode ? "Creating account..." : "Signing in...";
+
+      try {
+        if (isSignUpMode) {
+          await createUserWithEmailAndPassword(auth, email, password);
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+        let friendly = err.message;
+        if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+          friendly = "Invalid email or password. Try again or click 'Create Account'.";
+        } else if (err.code === "auth/email-already-in-use") {
+          friendly = "This email is already registered. Switch to 'Sign In'.";
+        } else if (err.code === "auth/operation-not-allowed") {
+          friendly = "Email/Password sign-in is disabled in Firebase Console. Enable it in Firebase Auth or use Guest mode.";
+        }
+        showAuthFeedback(friendly, true);
+      } finally {
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.textContent = isSignUpMode ? "Create Account & Enter" : "Sign In to Dashboard";
+      }
+    });
+
+    guestLoginBtn.addEventListener("click", async () => {
+      authMessage.classList.add("hidden");
+      guestLoginBtn.disabled = true;
+      guestLoginBtn.innerHTML = "<span>⏳</span> Connecting as Guest...";
+      try {
+        await signInAnonymously(auth);
+      } catch (err) {
+        console.error("Anonymous auth error:", err);
+        let friendly = "Guest login failed: " + err.message;
+        if (err.code === "auth/operation-not-allowed") {
+          friendly = "Anonymous Sign-In is not enabled in Firebase Console -> Authentication -> Sign-in method.";
+        }
+        showAuthFeedback(friendly, true);
+      } finally {
+        guestLoginBtn.disabled = false;
+        guestLoginBtn.innerHTML = "<span>⚡</span> Enter as Tournament Guest";
+      }
+    });
+
+    signOutBtn.addEventListener("click", async () => {
+      try {
+        if (unsubscribeSnapshot) {
+          unsubscribeSnapshot();
+          unsubscribeSnapshot = null;
+        }
+        await signOut(auth);
+      } catch (err) {
+        console.error("Sign out error:", err);
+      }
+    });
+
+    // Listen for Authentication State Changes & Determine Admin Role
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userEmail = (user.email || "").trim().toLowerCase();
+        isAdmin = !user.isAnonymous && userEmail === ADMIN_EMAIL.trim().toLowerCase();
+
+        updateRoleUI();
+        authScreen.classList.add("hidden");
+        dashboardScreen.classList.remove("hidden");
+        userEmailDisplay.textContent = user.isAnonymous
+          ? `Guest (${user.uid.slice(0, 6)}...)`
+          : user.email;
+
+        startFirestoreSync();
+      } else {
+        isAdmin = false;
+        players = [];
+        selectedCategoryKey = null;
+        dashboardScreen.classList.add("hidden");
+        authScreen.classList.remove("hidden");
+        if (unsubscribeSnapshot) {
+          unsubscribeSnapshot();
+          unsubscribeSnapshot = null;
+        }
+      }
+    });
+
+    // =====================================================================
+    // FIRESTORE REAL-TIME SYNC & ROLE-PROTECTED CRUD OPERATIONS
+    // =====================================================================
+    function startFirestoreSync() {
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+      const playersCol = collection(db, "karate_players");
+      unsubscribeSnapshot = onSnapshot(
+        playersCol,
+        (snapshot) => {
+          players = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data()
+          }));
+
+          // Sort newest first in JS memory
+          players.sort((a, b) => {
+            const tA = a.createdAt?.seconds || 0;
+            const tB = b.createdAt?.seconds || 0;
+            return tB - tA;
+          });
+
+          statusDot.className = "w-2 h-2 rounded-full bg-[#22c55e]";
+          statusText.textContent = "Cloud Synced";
+          renderRoster();
+        },
+        (err) => {
+          console.error("Firestore sync error:", err);
+          statusDot.className = "w-2 h-2 rounded-full bg-red-500";
+          statusText.textContent = "Sync Error";
+          showToast("Database permission error. Check Firestore rules.", true);
+        }
+      );
+    }
+
+    // Add New Player to Firestore (Without Phone Number)
+    document.getElementById("playerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!auth.currentUser) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving to Cloud...";
+
+      try {
+        await addDoc(collection(db, "karate_players"), {
+          name: document.getElementById("name").value.trim(),
+          age: Number(document.getElementById("age").value),
+          belt: document.getElementById("belt").value,
+          weight: Number(document.getElementById("weight").value),
+          registeredBy: auth.currentUser.email || "guest",
+          createdAt: serverTimestamp()
+        });
+
+        e.target.reset();
+        showToast("Player registered and saved to database!");
+      } catch (err) {
+        console.error("Save error:", err);
+        showToast("Failed to save player: " + err.message, true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Save Player to Database";
+      }
+    });
+
+    // Admin-Only Delete Flow with Double-Check Verification
+    const confirmModal = document.getElementById("confirmModal");
+    const confirmModalText = document.getElementById("confirmModalText");
+    const confirmCancelBtn = document.getElementById("confirmCancelBtn");
+    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+
+    document.getElementById("rosterBody").addEventListener("click", (e) => {
+      const btn = e.target.closest(".btn-delete");
+      if (!btn) return;
+
+      if (!isAdmin) {
+        showToast("Permission denied: Only Admin can delete records.", true);
+        return;
+      }
+
+      pendingDeleteId = btn.getAttribute("data-id");
+      const playerName = btn.getAttribute("data-name") || "this player";
+      confirmModalText.textContent = `Are you sure you want to remove "${playerName}" from the cloud database?`;
+      confirmModal.classList.remove("hidden");
+    });
+
+    confirmCancelBtn.addEventListener("click", () => {
+      pendingDeleteId = null;
+      confirmModal.classList.add("hidden");
+    });
+
+    confirmDeleteBtn.addEventListener("click", async () => {
+      if (!pendingDeleteId) return;
+      const idToDelete = pendingDeleteId;
+      confirmModal.classList.add("hidden");
+      pendingDeleteId = null;
+
+      if (!isAdmin) {
+        showToast("Unauthorized: Only Admin can delete player records.", true);
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, "karate_players", idToDelete));
+        showToast("Player record deleted by Admin.");
+      } catch (err) {
+        console.error("Delete error:", err);
+        showToast("Failed to delete player: " + err.message, true);
+      }
+    });
+
+    // =====================================================================
+    // RENDERING: ROSTER TABLE & 5 KG CLASSIFICATION VIEW
+    // =====================================================================
+    function renderRoster() {
+      const search = document.getElementById("searchInput").value.trim().toLowerCase();
+      const beltFilter = document.getElementById("beltFilter").value;
+      const tbody = document.getElementById("rosterBody");
+      const emptyState = document.getElementById("emptyState");
+
+      playerCount.textContent = players.length;
+
+      const filtered = players.filter((p) => {
+        const matchesSearch = (p.name || "").toLowerCase().includes(search);
+        const matchesBelt = beltFilter === "All" || p.belt === beltFilter;
+        return matchesSearch && matchesBelt;
+      });
+
+      tbody.innerHTML = "";
+      if (filtered.length === 0) {
+        emptyState.classList.remove("hidden");
+      } else {
+        emptyState.classList.add("hidden");
+        filtered.forEach((p) => {
+          const dotColor = BELT_COLORS[p.belt] || "#94a3b8";
+          const isBlack = p.belt === "Black";
+
+          const adminActionCell = isAdmin
+            ? `<td class="py-3 px-4 text-right">
+                <button
+                  type="button"
+                  data-id="${escapeHtml(p.id)}"
+                  data-name="${escapeHtml(p.name)}"
+                  class="btn-delete px-2.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-[#ef4444] hover:text-red-400 text-xs font-medium transition cursor-pointer"
+                >
+                  Delete
+                </button>
+              </td>`
+            : "";
+
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-800/40 transition";
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-semibold text-white">${escapeHtml(p.name)}</td>
+            <td class="py-3 px-3 text-slate-300">${escapeHtml(p.age)} yrs</td>
+            <td class="py-3 px-3">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0f172a] border border-slate-800 text-slate-200">
+                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${dotColor}; border:${isBlack ? '1px solid #64748b' : 'none'}"></span>
+                ${escapeHtml(p.belt)}
+              </span>
+            </td>
+            <td class="py-3 px-3 font-medium text-slate-200">${escapeHtml(p.weight)} kg</td>
+            ${adminActionCell}
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      updateBracketFilterDropdown();
+      renderClassification();
+    }
+
+    function updateBracketFilterDropdown() {
+      const bracketSelect = document.getElementById("classificationBracketFilter");
+      const currentVal = bracketSelect.value;
+
+      const bracketMap = new Map();
+      players.forEach((p) => {
+        const label = get5KgBracket(p.weight);
+        const sortVal = get5KgSortValue(p.weight);
+        bracketMap.set(label, sortVal);
+      });
+
+      const sortedBrackets = Array.from(bracketMap.entries()).sort((a, b) => a[1] - b[1]);
+
+      bracketSelect.innerHTML = `<option value="All">All 5 kg Brackets</option>`;
+      sortedBrackets.forEach(([label]) => {
+        const opt = document.createElement("option");
+        opt.value = label;
+        opt.textContent = label;
+        bracketSelect.appendChild(opt);
+      });
+
+      if (Array.from(bracketSelect.options).some((o) => o.value === currentVal)) {
+        bracketSelect.value = currentVal;
+      }
+    }
+
+    function renderClassification() {
+      const divFilter = document.getElementById("classificationDivisionFilter").value;
+      const bracketFilter = document.getElementById("classificationBracketFilter").value;
+      const tbody = document.getElementById("classificationBody");
+      const emptyState = document.getElementById("classificationEmptyState");
+      const summaryGrid = document.getElementById("bracketSummaryGrid");
+      const activeBanner = document.getElementById("activeCardBanner");
+      const activeLabel = document.getElementById("activeCardLabel");
+
+      // Enrich and sort players: Color Belts first, then Black Belt, then ascending 5 kg bracket
+      const enriched = players
+        .map((p) => {
+          const isBlack = p.belt === "Black";
+          return {
+            ...p,
+            division: isBlack ? "Black Belt" : "Color Belts",
+            bracket: get5KgBracket(p.weight),
+            sortWeight: get5KgSortValue(p.weight)
+          };
+        })
+        .sort((a, b) => {
+          if (a.division !== b.division) {
+            return a.division === "Color Belts" ? -1 : 1;
+          }
+          if (a.sortWeight !== b.sortWeight) {
+            return a.sortWeight - b.sortWeight;
+          }
+          return Number(a.weight) - Number(b.weight);
+        });
+
+      // Base filter driven by the top dropdowns
+      const dropdownFiltered = enriched.filter((p) => {
+        const matchesDiv = divFilter === "All" || p.division === divFilter;
+        const matchesBracket = bracketFilter === "All" || p.bracket === bracketFilter;
+        return matchesDiv && matchesBracket;
+      });
+
+      // Group counts for clickable summary cards
+      const groupCounts = {};
+      dropdownFiltered.forEach((p) => {
+        const key = `${p.division}|${p.bracket}`;
+        groupCounts[key] = (groupCounts[key] || 0) + 1;
+      });
+
+      // Reset selected card if it no longer exists in the filtered set
+      if (selectedCategoryKey && !groupCounts[selectedCategoryKey]) {
+        selectedCategoryKey = null;
+      }
+
+      // Toggle active card filter banner
+      if (selectedCategoryKey) {
+        const [selDiv, selBracket] = selectedCategoryKey.split("|");
+        activeBanner.classList.remove("hidden");
+        activeLabel.textContent = `${selDiv} — ${selBracket}`;
+      } else {
+        activeBanner.classList.add("hidden");
+      }
+
+      // Render clickable summary cards
+      summaryGrid.innerHTML = "";
+      Object.entries(groupCounts).forEach(([key, count]) => {
+        const [division, bracket] = key.split("|");
+        const isBlackGroup = division === "Black Belt";
+        const isSelected = selectedCategoryKey === key;
+
+        const card = document.createElement("button");
+        card.type = "button";
+        card.setAttribute("data-key", key);
+        card.title = isSelected ? "Click to show all categories" : `Click to view players in ${division} (${bracket})`;
+        card.className = `summary-item text-left p-4 rounded-xl bg-[#0f172a] border border-slate-800 flex items-center justify-between ${isSelected ? "active-card" : ""}`;
+
+        card.innerHTML = `
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider ${isBlackGroup ? 'text-amber-400' : 'text-sky-400'}">
+              ${escapeHtml(division)}
+            </span>
+            <div class="text-sm font-bold text-white mt-0.5">${escapeHtml(bracket)}</div>
+          </div>
+          <div class="summary-count w-8 h-8 rounded-lg bg-[#1e293b] border border-slate-700 text-white flex items-center justify-center text-sm font-extrabold transition">
+            ${count}
+          </div>
+        `;
+
+        card.addEventListener("click", () => {
+          selectedCategoryKey = selectedCategoryKey === key ? null : key;
+          renderClassification();
+        });
+
+        summaryGrid.appendChild(card);
+      });
+
+      // Filter table rows by selected summary card if active
+      const tablePlayers = selectedCategoryKey
+        ? dropdownFiltered.filter((p) => `${p.division}|${p.bracket}` === selectedCategoryKey)
+        : dropdownFiltered;
+
+      // Render Classification Table Rows (No Phone Column)
+      tbody.innerHTML = "";
+      if (tablePlayers.length === 0) {
+        emptyState.classList.remove("hidden");
+      } else {
+        emptyState.classList.add("hidden");
+        tablePlayers.forEach((p) => {
+          const isBlack = p.belt === "Black";
+          const dotColor = BELT_COLORS[p.belt] || "#94a3b8";
+          const badgeStyle = isBlack
+            ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+            : "bg-sky-500/10 text-sky-300 border-sky-500/30";
+
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-800/40 transition";
+          tr.innerHTML = `
+            <td class="py-3 px-4">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeStyle}">
+                ${escapeHtml(p.division)}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-bold text-white">${escapeHtml(p.bracket)}</td>
+            <td class="py-3 px-4 font-semibold text-slate-200">${escapeHtml(p.name)}</td>
+            <td class="py-3 px-3 text-slate-300">${escapeHtml(p.age)} yrs</td>
+            <td class="py-3 px-3 font-medium text-slate-200">${escapeHtml(p.weight)} kg</td>
+            <td class="py-3 px-3">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0f172a] border border-slate-800 text-slate-200">
+                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${dotColor}; border:${isBlack ? '1px solid #64748b' : 'none'}"></span>
+                ${escapeHtml(p.belt)}
+              </span>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    // =====================================================================
+    // TAB SWITCHING & CSV EXPORT (NO PHONE NUMBER COLUMN)
+    // =====================================================================
+    navRegisterBtn.addEventListener("click", () => {
+      registerTab.classList.remove("hidden");
+      classifyTab.classList.add("hidden");
+      navRegisterBtn.className = "px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#ef4444] text-white shadow-md shadow-red-600/20 transition cursor-pointer";
+      navClassifyBtn.className = "px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#1e293b] text-slate-400 hover:text-white border border-slate-800 transition cursor-pointer";
+    });
+
+    navClassifyBtn.addEventListener("click", () => {
+      classifyTab.classList.remove("hidden");
+      registerTab.classList.add("hidden");
+      navClassifyBtn.className = "px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#ef4444] text-white shadow-md shadow-red-600/20 transition cursor-pointer";
+      navRegisterBtn.className = "px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#1e293b] text-slate-400 hover:text-white border border-slate-800 transition cursor-pointer";
+    });
+
+    document.getElementById("searchInput").addEventListener("input", renderRoster);
+    document.getElementById("beltFilter").addEventListener("change", renderRoster);
+    document.getElementById("classificationDivisionFilter").addEventListener("change", () => {
+      selectedCategoryKey = null;
+      renderClassification();
+    });
+    document.getElementById("classificationBracketFilter").addEventListener("change", () => {
+      selectedCategoryKey = null;
+      renderClassification();
+    });
+    document.getElementById("clearCardFilterBtn").addEventListener("click", () => {
+      selectedCategoryKey = null;
+      renderClassification();
+    });
+
+    document.getElementById("exportCsvBtn").addEventListener("click", () => {
+      if (players.length === 0) {
+        showToast("No registered players to export yet.", true);
+        return;
+      }
+
+      const headers = ["Name", "Age", "Belt", "Weight (kg)"];
+      const rows = players.map((p) => [
+        `"${String(p.name).replace(/"/g, '""')}"`,
+        p.age,
+        p.belt,
+        p.weight
+      ]);
+
+      const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "karate_tournament_roster.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("CSV exported without phone numbers!");
+    });
+  </script>
+</body>
+</html>
